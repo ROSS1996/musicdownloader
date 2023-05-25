@@ -1,1 +1,26 @@
 downloads/
+# Compiled Python files
+*.pyc
+*.pyo
+__pycache__/
+
+# Virtual environment
+venv/
+env/
+.env
+
+# IDE-specific files
+.idea/
+.vscode/
+
+# Logs and cache
+*.log
+*.swp
+*.swo
+*.cache/
+
+# Other project-specific files and directories
+*.bak
+*.tmp
+*.temp
+*.bak
