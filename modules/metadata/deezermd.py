@@ -6,7 +6,7 @@ from datetime import datetime
 
 def cleanTitle(title):
     title = re.sub(
-        r"(?i)\s+(?:ft\.?|feat\.?|featuring)\s+.*?(?=\s+-)", "", title)
+        r"(?i)\s+(?:ft\.?|feat\.?|featuring|with)\s+.*?(?=\s+-)", "", title)
     title = re.sub(r"\(prod\..*?\)|\(prod\..*?\)$",
                    "", title, flags=re.IGNORECASE)
     title = re.sub(r'\([^)]*\)', '', title)
@@ -22,7 +22,7 @@ def extract_metadata(track_data, album_data):
                      for contributor in album_data["contributors"] if contributor["role"] == "Main" and contributor["id"] != 5080]
     various = True if len(album_artists) == 0 else False
     # Track Info
-    track_title = track_data["title"]
+    track_title = cleanTitle(track_data["title"])
     contributors = track_data["contributors"]
     track_main_artist = ", ".join(
         contributor["name"] for contributor in contributors if contributor["name"] in album_artists or various == True)

@@ -2,4 +2,4 @@ pytube
 youtube_dl
 yt_dlp
 pydub
-mutagen
+eyed3

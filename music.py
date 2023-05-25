@@ -32,10 +32,11 @@ for link in links:
         genre = info['genre'] if 'genre' in info else None
         position = position = info['position'] if 'genre' in info else None
         disc = disc = info['disc'] if 'genre' in info else None
+        album_artist = info['album_artist'] if 'album_artist' in info else None
 
         ytdlpdowloader.download(link, title, filename, music_id)
         editor.edit_tags(filename, title, full_artist, main_artist,
-                         album, thumbnail_url, publish_date, genre, position, disc)
+                         album, album_artist, thumbnail_url, publish_date, genre, position, disc)
 
     except Exception as e:
         print(f"An error occurred while processing link: {link}")

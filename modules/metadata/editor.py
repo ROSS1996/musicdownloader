@@ -1,39 +1,39 @@
 import os
 import requests
-from mutagen.id3 import ID3, TIT2, TPE1, TYER, TOPE, TPE2, APIC, TALB, TCON, TRCK, TPOS
-from mutagen.id3._util import ID3NoHeaderError
+import eyed3
 
 
-def edit_tags(filename, title, full_artist, main_artist, album, thumbnail_url, publish_date, genre, position, disc):
+def edit_tags(filename, title, full_artist, main_artist, album, album_artist, thumbnail_url, publish_date, genre, position, disc):
     print(f"Setting tags for {filename}...")
     song_path = os.path.join('downloads', f"{filename}.mp3")
 
-    try:
-        audio_tags = ID3(song_path)
-    except ID3NoHeaderError:
-        audio_tags = ID3()
+    audio_file = eyed3.load(song_path)
 
-    audio_tags.delete()
-    audio_tags["TIT2"] = TIT2(encoding=3, text=title)
-    audio_tags["TPE1"] = TPE1(encoding=3, text=full_artist)
-    audio_tags["TPE2"] = TPE2(encoding=3, text=main_artist)
-    audio_tags["TALB"] = TALB(encoding=3, text=album)
-    audio_tags["TYER"] = TYER(encoding=3, text=str(publish_date))
+    if audio_file is None:
+        audio_file = eyed3.core.AudioFile(song_path)
+        audio_file.initTag()
 
+    audio_file.tag.title = title
+    audio_file.tag.artist = full_artist
+    audio_file.tag.album_artist = album_artist
+    audio_file.tag.album = album
+    audio_file.tag.recording_date = eyed3.core.Date(publish_date)
+
+    if album_artist is None:
+        audio_file.tag.genre = main_artist
     if genre is not None:
-        audio_tags["TCON"] = TCON(encoding=3, text=genre)
+        audio_file.tag.genre = genre
     if position is not None:
-        audio_tags["TRCK"] = TRCK(encoding=3, text=str(position))
+        audio_file.tag.track_num = position
     if disc is not None:
-        audio_tags["TPOS"] = TPOS(encoding=3, text=str(disc))
+        audio_file.tag.disc_num = disc
 
     try:
         thumbnail_data = requests.get(thumbnail_url).content
-        audio_tags["APIC"] = APIC(
-            encoding=3, mime='image/jpeg', type=3, desc='Cover', data=thumbnail_data)
+        audio_file.tag.images.set(3, thumbnail_data, 'image/jpeg', u"Cover")
     except requests.RequestException as e:
         print(f"Error retrieving thumbnail: {str(e)}")
 
-    audio_tags.save(song_path, v1=2, v2_version=3)
+    audio_file.tag.save()
 
     print(f"Tags set for {filename}!")
