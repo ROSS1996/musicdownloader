@@ -20,11 +20,7 @@ def extract_metadata(track_data, album_data):
                             for genre in album_data["genres"]["data"])
     album_artists = [contributor["name"]
                      for contributor in album_data["contributors"] if contributor["role"] == "Main" and contributor["id"] != 5080]
-    album_label = album_data["label"]
-    various = False
-    if len(album_artists) == 0:
-        various = True
-
+    various = True if len(album_artists) == 0 else False
     # Track Info
     track_title = track_data["title"]
     contributors = track_data["contributors"]
@@ -34,7 +30,7 @@ def extract_metadata(track_data, album_data):
         contributor["name"] for contributor in contributors if contributor["name"] not in track_main_artist)
     track_album = track_data["album"]["title"]
     track_position = track_data["track_position"]
-    track_disk = track_data["disk_number"]
+    track_disc = track_data["disk_number"] if 'disk_number' in track_data else None
     thumbnail_url = track_data["album"]["cover_big"]
     track_release_date = track_data["release_date"]
     track_publish_date = datetime.strptime(track_release_date, "%Y-%m-%d").year
@@ -55,9 +51,8 @@ def extract_metadata(track_data, album_data):
         'publish_date': track_publish_date,
         'genre': album_genre,
         'album_artist': ", ".join(album_artists),
-        'label': album_label,
         'position': track_position,
-        'disk': track_disk
+        'disc': track_disc
     }
 
     return song_metadata
@@ -77,8 +72,19 @@ def getData(artist, title):
         if "data" in data and data["data"]:
             tracks = data["data"]
 
-            track_info = min(tracks, key=lambda track: (track["rank"], cleanTitle(
-                track["title"]) == cleanTitle(title) or track["artist"]["name"] == artist))
+            # Print the rank and name of each track
+
+            # Filter tracks by title
+            filtered_titles = [track for track in tracks if cleanTitle(
+                track["title"]) == cleanTitle(title)]
+
+            # Filter tracks by artist
+            filtered_artist = [
+                track for track in filtered_titles if track["artist"]["name"] == artist]
+
+            # Pick the most popular track
+            track_info = max(filtered_artist, key=lambda track: track["rank"]) if len(
+                filtered_artist) > 0 else max(filtered_titles, key=lambda track: track["rank"])
 
             track_id = track_info["id"]
             album_id = track_info["album"]["id"]
@@ -88,15 +94,15 @@ def getData(artist, title):
             album_response = requests.get(
                 f'https://api.deezer.com/album/{album_id}')
             album_data = album_response.json()
-
             if "error" not in track_data:
                 song_metadata = extract_metadata(track_data, album_data)
                 return song_metadata
 
     except requests.RequestException as e:
         print(f"An error occurred during the API request: {str(e)}")
-    except (KeyError, IndexError):
-        print("No song metadata found for the provided artist and title.")
+    except (KeyError, IndexError) as e:
+        print(
+            f"No song metadata found for the provided artist and title. {str(e)}")
     except ValueError as e:
         print(f"An error occurred while processing the response: {str(e)}")
 

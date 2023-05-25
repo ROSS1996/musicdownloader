@@ -1,10 +1,10 @@
 import os
 import requests
-from mutagen.id3 import ID3, TIT2, TPE1, TYER, TOPE, TPE2, APIC, TALB
+from mutagen.id3 import ID3, TIT2, TPE1, TYER, TOPE, TPE2, APIC, TALB, TCON, TRCK, TPOS
 from mutagen.id3._util import ID3NoHeaderError
 
 
-def edit_tags(filename, title, full_artist, main_artist, album, thumbnail_url, publish_date):
+def edit_tags(filename, title, full_artist, main_artist, album, thumbnail_url, publish_date, genre, position, disc):
     print(f"Setting tags for {filename}...")
     song_path = os.path.join('downloads', f"{filename}.mp3")
 
@@ -19,6 +19,13 @@ def edit_tags(filename, title, full_artist, main_artist, album, thumbnail_url, p
     audio_tags["TPE2"] = TPE2(encoding=3, text=main_artist)
     audio_tags["TALB"] = TALB(encoding=3, text=album)
     audio_tags["TYER"] = TYER(encoding=3, text=str(publish_date))
+
+    if genre is not None:
+        audio_tags["TCON"] = TCON(encoding=3, text=genre)
+    if position is not None:
+        audio_tags["TRCK"] = TRCK(encoding=3, text=str(position))
+    if disc is not None:
+        audio_tags["TPOS"] = TPOS(encoding=3, text=str(disc))
 
     try:
         thumbnail_data = requests.get(thumbnail_url).content
