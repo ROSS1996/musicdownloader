@@ -1,0 +1,4 @@
+pytube
+youtube_dl
+yt_dlp
+pydub
