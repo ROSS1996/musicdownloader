@@ -2,14 +2,7 @@ import yt_dlp
 import os
 
 
-def download(info):
-
-    link = info["link"]
-    title = info["title"]
-    filename = info["filename"]
-    music_id = info["music_id"]
-    directory = info["directory"]
-
+def download(link, title, filename, directory, music_id):
     ydl_opts = {
         'format': 'bestaudio/best',
         'outtmpl': f'{directory}/{filename}.%(ext)s',

@@ -26,4 +26,5 @@ env/
 *.bak
 
 downloaded.json
+history.json
 links.txt

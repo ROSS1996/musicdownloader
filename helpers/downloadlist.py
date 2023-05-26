@@ -2,12 +2,9 @@ import json
 import os
 
 
-def check(info):
-    link = info["link"]
-    downloadDir = info["downloadDir"]
-    downloadedDir = info["downloadedDir"]
+def check(link, historyFile, downloadDir):
     try:
-        with open(downloadedDir, 'r') as f:
+        with open(historyFile, 'r') as f:
             downloaded_data = json.load(f)
     except:
         return False
@@ -23,21 +20,16 @@ def check(info):
     return False
 
 
-def save(info):
-    filename = info["filename"]
-    link = info["link"]
-    downloadedDir = info["downloadedDir"]
-
-    downloaded_info = {'filename': filename, 'link': link}
-
+def save(filename, link, historyFile):
     try:
-        with open(downloadedDir, 'r') as f:
+        with open(historyFile, 'r') as f:
             data = json.load(f)
     except FileNotFoundError:
         data = []
 
+    downloaded_info = {'filename': filename, 'link': link}
     data.append(downloaded_info)
 
-    with open(downloadedDir, 'w') as f:
+    with open(historyFile, 'w') as f:
         json.dump(data, f, indent=2)
         f.write('\n')
