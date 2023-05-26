@@ -3,8 +3,10 @@ from difflib import SequenceMatcher
 
 
 def strings(str1, str2):
+    string1 = str1.lower()
+    string2 = str2.lower()
     # Create a SequenceMatcher object with the two strings
-    matcher = SequenceMatcher(None, str1, str2)
+    matcher = SequenceMatcher(None, string1, string2)
 
     # Get the ratio of similarity between the strings (ranges from 0 to 1)
     similarity_ratio = matcher.ratio()
