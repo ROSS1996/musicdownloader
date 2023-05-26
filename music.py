@@ -3,9 +3,10 @@ import re
 import traceback
 import sys
 import json
-from modules.downloaders import ytdlpdowloader
-from modules.metadata import youtubemd, deezermd, editor
-from helpers import songid, removechars, playlist, downloadlist
+from modules.downloaders import ytdlp
+from modules.metadata import youtubemd, editor
+from modules.metadata.providers import deezermd
+from helpers import songid, removechars, playlist, history
 
 
 def createFiles(downloads_dir, history_file):
@@ -41,7 +42,7 @@ def processLinks(links):
 
 
 def downloadSong(link, history_file, downloads_dir):
-    if downloadlist.check(link=link, historyFile=history_file, downloadDir=downloads_dir):
+    if history.check(link=link, historyFile=history_file, downloadDir=downloads_dir):
         print(
             f'Song {link} already exists in the downloads directory. Skipping...')
         return
@@ -59,16 +60,16 @@ def downloadSong(link, history_file, downloads_dir):
         if os.path.exists(file_path):
             print(
                 f"Song '{info['filename']}' already exists in the downloads directory. Skipping...")
-            downloadlist.save(
+            history.save(
                 filename=info['filename'], link=link, historyFile=history_file)
             return
 
-        ytdlpdowloader.download(
+        ytdlp.download(
             link=link, title=info['title'], filename=info['filename'], directory=downloads_dir, music_id=music_id)
 
         info['downloadDir'] = downloads_dir
         editor.edit_tags(info)
-        downloadlist.save(
+        history.save(
             filename=info['filename'], link=link, historyFile=history_file)
 
     except Exception as e:
