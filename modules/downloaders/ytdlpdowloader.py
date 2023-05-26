@@ -2,10 +2,17 @@ import yt_dlp
 import os
 
 
-def download(link, title, filename, music_id):
+def download(info):
+
+    link = info["link"]
+    title = info["title"]
+    filename = info["filename"]
+    music_id = info["music_id"]
+    directory = info["directory"]
+
     ydl_opts = {
         'format': 'bestaudio/best',
-        'outtmpl': f'downloads/{filename}.%(ext)s',
+        'outtmpl': f'{directory}/{filename}.%(ext)s',
         'postprocessors': [{
             'key': 'FFmpegExtractAudio',
             'preferredcodec': 'mp3',
@@ -14,10 +21,6 @@ def download(link, title, filename, music_id):
     }
 
     try:
-        # Check if the 'downloads' directory exists and create it if needed
-        output_directory = 'downloads'
-        os.makedirs(output_directory, exist_ok=True)
-
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             ydl.download([link])
         return True

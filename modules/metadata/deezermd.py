@@ -10,6 +10,7 @@ def cleanTitle(title):
     title = re.sub(r"\(prod\..*?\)|\(prod\..*?\)$",
                    "", title, flags=re.IGNORECASE)
     title = re.sub(r'\([^)]*\)', '', title)
+    title = re.sub(r'\[.*?\]', '', title)
     title = title.strip()
     return title
 
