@@ -57,7 +57,7 @@ for link in all_links:
         metadata = deezermd.getData(info['main_artist'], info['title'])
         if metadata:
             info.update(metadata)
-        info['filename'] = removechars.remove(info['filename'])
+        info['filename'] = removechars.windows(info['filename'])
 
         file_path = os.path.join(downloads_dir, f"{info['filename']}.mp3")
         if os.path.exists(file_path):

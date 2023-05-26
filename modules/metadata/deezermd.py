@@ -2,17 +2,7 @@ import requests
 import json
 import re
 from datetime import datetime
-
-
-def cleanTitle(title):
-    title = re.sub(
-        r"(?i)\s+(?:ft\.?|feat\.?|featuring|with)\s+.*?(?=\s+-)", "", title)
-    title = re.sub(r"\(prod\..*?\)|\(prod\..*?\)$",
-                   "", title, flags=re.IGNORECASE)
-    title = re.sub(r'\([^)]*\)', '', title)
-    title = re.sub(r'\[.*?\]', '', title)
-    title = title.strip()
-    return title
+from helpers import removechars, compare
 
 
 def extract_metadata(track_data, album_data):
@@ -23,7 +13,7 @@ def extract_metadata(track_data, album_data):
                      for contributor in album_data["contributors"] if contributor["role"] == "Main" and contributor["id"] != 5080]
     various = True if len(album_artists) == 0 else False
     # Track Info
-    track_title = cleanTitle(track_data["title"])
+    track_title = removechars.title(track_data["title"])
     contributors = track_data["contributors"]
     track_main_artist = ", ".join(
         contributor["name"] for contributor in contributors if contributor["name"] in album_artists or various == True)
@@ -60,9 +50,9 @@ def extract_metadata(track_data, album_data):
 
 
 def getData(artist, title):
-    song_name = f"{artist} - {title}"
+    song_name = f"{artist} - {removechars.title(title)}"
     print(f'Retrieving information for {song_name} from Deezer API...')
-    cleaned_name = cleanTitle(song_name)
+    cleaned_name = removechars.title(song_name)
 
     base_url = "https://api.deezer.com/search"
     params = {"q": cleaned_name}
@@ -73,19 +63,16 @@ def getData(artist, title):
         if "data" in data and data["data"]:
             tracks = data["data"]
 
-            # Print the rank and name of each track
-
             # Filter tracks by title
-            filtered_titles = [track for track in tracks if cleanTitle(
-                track["title"]) == cleanTitle(title)]
+            filtered_titles = [track for track in tracks if compare.strings(
+                removechars.title(track['title']), removechars.title(title))]
 
             # Filter tracks by artist
             filtered_artist = [
-                track for track in filtered_titles if track["artist"]["name"] == artist]
+                track for track in filtered_titles if compare.strings(track["artist"]["name"], artist)]
 
             # Pick the most popular track
-            track_info = max(filtered_artist, key=lambda track: track["rank"]) if len(
-                filtered_artist) > 0 else max(filtered_titles, key=lambda track: track["rank"])
+            track_info = max(filtered_artist, key=lambda track: track["rank"])
 
             track_id = track_info["id"]
             album_id = track_info["album"]["id"]

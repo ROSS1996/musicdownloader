@@ -1,6 +1,7 @@
 import re
 import youtube_dl
 from pytube import YouTube
+from helpers import removechars
 
 
 def extract_song_data(artist, info_dict):
@@ -14,6 +15,8 @@ def extract_song_data(artist, info_dict):
         'featured_artists': None,
         'publish_date': info_dict.get("upload_date", "")[:4]
     }
+
+    song_data["title"] = removechars.title(song_data["title"])
 
     # Extract the main artist and featured artists
     artist_names = re.split(r", | & ", artist)

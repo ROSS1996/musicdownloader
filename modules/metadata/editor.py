@@ -32,6 +32,7 @@ def edit_tags(info):
     audio_file.tag.title = title
     audio_file.tag.artist = full_artist
     audio_file.tag.album = album
+    audio_file.tag.album_artist = album_artist if album_artist is not None else main_artist
 
     try:
         year = int(publish_date)
@@ -40,8 +41,6 @@ def edit_tags(info):
 
     if year is not None:
         audio_file.tag.recording_date = eyed3.core.Date(year)
-    if album_artist is None:
-        audio_file.tag.album_artist = main_artist
     if genre is not None:
         audio_file.tag.genre = genre
     if position is not None:
