@@ -6,7 +6,7 @@ import json
 from modules.downloaders import ytdlp
 from modules.metadata import youtubemd, editor
 from modules.metadata.providers import deezermd
-from helpers import songid, removechars, playlist, history
+from helpers import linkchecker, removechars, playlist, history
 
 
 def createFiles(downloads_dir, history_file):
@@ -33,7 +33,10 @@ def processLinks(links):
     all_links = []
     for link in links:
         link = link.strip()
-        if re.search(r"(playlist|list)", link, re.IGNORECASE):
+        if not linkchecker.validLink(link):
+            print(f'{link} is not a valid Youtube/YT Music link. Skipping...')
+            continue
+        if linkchecker.isPlaylist(link):
             playlist_video_urls = playlist.decouple(link)
             all_links.extend(playlist_video_urls)
         else:
@@ -48,7 +51,7 @@ def downloadSong(link, history_file, downloads_dir):
         return
 
     try:
-        music_id = songid.getter(link)
+        music_id = linkchecker.songId(link)
         info = youtubemd.pytubeFetcher(link)
         metadata = deezermd.getData(
             artist=info['main_artist'], title=info['title'])

@@ -71,8 +71,12 @@ def getData(artist, title):
             filtered_artist = [
                 track for track in filtered_titles if compare.strings(track["artist"]["name"], artist)]
 
-            # Pick the most popular track
-            track_info = max(filtered_artist, key=lambda track: track["rank"])
+            try:
+                # Pick the most popular track
+                track_info = max(
+                    filtered_artist, key=lambda track: track["rank"])
+            except:
+                raise f"The script could not find '{artist} - {title}' in Deezer's API. Try again with a different link."
 
             track_id = track_info["id"]
             album_id = track_info["album"]["id"]
@@ -90,7 +94,7 @@ def getData(artist, title):
         print(f"An error occurred during the API request: {str(e)}")
     except (KeyError, IndexError) as e:
         print(
-            f"No song metadata found for the provided artist and title. {str(e)}")
+            f"No song metadata found for '{artist} - {title}'. {str(e)}")
     except ValueError as e:
         print(f"An error occurred while processing the response: {str(e)}")
 
