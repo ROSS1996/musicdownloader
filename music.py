@@ -23,7 +23,13 @@ def readLinks(links_file):
             if not lines:
                 raise Exception(
                     "The links file is empty. Consider adding some YouTube links to it before executing the script")
-            return lines
+            split_lines = []
+            for line in lines:
+                split_items = line.strip().split()
+                split_lines.extend(split_items)
+
+            return split_lines
+
     except FileNotFoundError:
         print(f"The links file does not exist in the current directory. A new file was created. Consider adding some YouTube links to it before executing the script")
         sys.exit(1)
