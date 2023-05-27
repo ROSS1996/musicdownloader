@@ -76,8 +76,9 @@ def getData(artist, title):
                 track_info = max(
                     filtered_artist, key=lambda track: track["rank"])
             except Exception as e:
-                raise Exception(
-                    f"The script could not find '{artist} - {title}' in Deezer's API. Try again with a different link") from e
+                print(
+                    f"The script could not find '{artist} - {title}' in Deezer's API. Try again with a different link")
+                return None
 
             track_id = track_info["id"]
             album_id = track_info["album"]["id"]

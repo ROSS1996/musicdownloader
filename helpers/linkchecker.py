@@ -3,7 +3,7 @@ import re
 
 def validLink(link):
     # Regular expression pattern for matching allowed YouTube/YouTube Music links
-    pattern = r'(?:https?://)?(?:www\.)?(?:youtube\.com/watch\?(?:.*&)?v=[\w-]+|music\.youtube\.com/watch\?(?:.*&)?v=[\w-]+|music\.youtube\.com/playlist\?list=[\w-]+|music\.youtube\.com/shorts/[\w-]+|www\.youtube\.com/embed/[\w-]+)'
+    pattern = r'(?:https?://)?(?:www\.)?(?:youtube\.com/watch\?(?:.*&)?v=[\w-]+|music\.youtube\.com/watch\?(?:.*&)?v=[\w-]+|music\.youtube\.com/playlist\?list=[\w-]+|music\.youtube\.com/shorts/[\w-]+|www\.youtube\.com/embed/[\w-]+|www\.youtube\.com/playlist\?list=[\w-]+)'
 
     # Check if the link matches the pattern
     match = re.match(pattern, link)
