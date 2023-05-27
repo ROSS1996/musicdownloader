@@ -1,5 +1,7 @@
 import json
 import os
+import datetime
+from helpers import linkchecker
 
 
 def check(link, historyFile, downloadDir):
@@ -10,7 +12,9 @@ def check(link, historyFile, downloadDir):
         return False
 
     for entry in downloaded_data:
-        if entry['link'] == link:
+        entry_id = linkchecker.songId(entry['link'])
+        link_id = linkchecker.songId(link)
+        if entry_id == link_id:
             filename = entry['filename']
             mp3_path = os.path.join(downloadDir, f"{filename}.mp3")
             if os.path.exists(mp3_path):
@@ -27,7 +31,11 @@ def save(filename, link, historyFile):
     except FileNotFoundError:
         data = []
 
-    downloaded_info = {'filename': filename, 'link': link}
+    current_datetime = datetime.datetime.now()
+    formatted_datetime = current_datetime.strftime('%d-%m-%Y %H:%M:%S')
+
+    downloaded_info = {'filename': filename,
+                       'link': link, 'datetime': formatted_datetime}
     data.append(downloaded_info)
 
     with open(historyFile, 'w') as f:
