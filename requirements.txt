@@ -3,3 +3,4 @@ youtube_dl
 yt_dlp
 pydub
 eyed3
+fuzzywuzzy

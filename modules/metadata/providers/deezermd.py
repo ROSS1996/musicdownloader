@@ -1,6 +1,4 @@
 import requests
-import json
-import re
 from datetime import datetime
 from helpers import removechars, compare
 
@@ -50,7 +48,6 @@ def extract_metadata(track_data, album_data):
 
 
 def getData(artist, features, title):
-    featured_artists = features.split(", ")
     print(
         f'Retrieving information for {removechars.title(title)} - {artist} {features} from Deezer API...')
     base_url = "https://api.deezer.com/search"
@@ -58,45 +55,69 @@ def getData(artist, features, title):
 
     try:
         response = requests.get(base_url, params=params)
+        response.raise_for_status()
         data = response.json()
         if "data" in data and data["data"]:
             tracks = data["data"]
 
-            # Filter tracks by title
-            filtered_titles = [track for track in tracks if compare.strings(
-                removechars.title(track['title']), removechars.title(title))]
-
-            # Filter tracks by artist
-            filtered_artist = [
-                track for track in filtered_titles if compare.strings(track["artist"]["name"], artist) or any(compare.strings(track["artist"]["name"], featured_artist) for featured_artist in featured_artists)
+            filtered_tracks = [
+                track for track in tracks
+                if compare.strings(removechars.title(track['title']), removechars.title(title))
+                and compare.strings(track["artist"]["name"], f"{artist}, {features}")
             ]
-            try:
-                # Pick the most popular track
-                track_info = max(
-                    filtered_artist, key=lambda track: track["rank"])
-            except Exception as e:
-                print(
-                    f"The script could not find '{artist} - {title}' in Deezer's API. Try again with a different link")
-                return None
 
-            track_id = track_info["id"]
-            album_id = track_info["album"]["id"]
-            track_response = requests.get(
-                f'https://api.deezer.com/track/{track_id}')
-            track_data = track_response.json()
-            album_response = requests.get(
-                f'https://api.deezer.com/album/{album_id}')
-            album_data = album_response.json()
-            if "error" not in track_data:
-                song_metadata = extract_metadata(track_data, album_data)
-                return song_metadata
+            track_metadata = None
+            album_metadata = None
+            for track in filtered_tracks:
+                track_data = get_track_metadata(track["id"])
+                album_data = get_album_metadata(track["album"]["id"])
+                if "error" not in track_data and "error" not in album_data:
+                    if track_metadata is None and album_metadata is None:
+                        track_metadata = track_data
+                        album_metadata = album_data
+                        continue
+                    album_type = albumType(album_data, track["artist"]["name"])
+                    if album_type == "Album":
+                        track_metadata = track_data
+                        album_metadata = album_data
+                        break
+                    elif album_type == "Single" and albumType(album_metadata, track["artist"]["name"]) != "Album":
+                        track_metadata = track_data
+                        album_metadata = album_data
+                    elif album_type == "Compilation" and albumType(album_metadata, track["artist"]["name"]) != "Album" and albumType(album_metadata, track["artist"]["name"]) != "Single":
+                        track_metadata = track_data
+                        album_metadata = album_data
+            song_metadata = extract_metadata(track_metadata, album_metadata)
+            return song_metadata
 
-    except requests.RequestException as e:
+    except requests.exceptions.RequestException as e:
         print(f"An error occurred during the API request: {str(e)}")
     except (KeyError, IndexError) as e:
-        print(
-            f"No song metadata found for '{artist} - {title}'. {str(e)}")
+        print(f"No song metadata found for '{artist} - {title}'. {str(e)}")
     except ValueError as e:
         print(f"An error occurred while processing the response: {str(e)}")
 
     return None
+
+
+def albumType(album_data, artist):
+    if album_data["nb_tracks"] > 1 and any(compare.strings(contributor["name"], artist) for contributor in album_data["contributors"]):
+        return "Album"
+    elif album_data["nb_tracks"] == 1 and any(compare.strings(contributor["name"], artist) for contributor in album_data["contributors"]):
+        return "Single"
+    else:
+        return "Compilation"
+
+
+def get_track_metadata(track_id):
+    track_response = requests.get(f'https://api.deezer.com/track/{track_id}')
+    track_data = track_response.json()
+    track_response.raise_for_status()
+    return track_data
+
+
+def get_album_metadata(album_id):
+    album_response = requests.get(f'https://api.deezer.com/album/{album_id}')
+    album_data = album_response.json()
+    album_response.raise_for_status()
+    return album_data
