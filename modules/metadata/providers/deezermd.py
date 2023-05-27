@@ -49,13 +49,12 @@ def extract_metadata(track_data, album_data):
     return song_metadata
 
 
-def getData(artist, title):
-    song_name = f"{artist} - {removechars.title(title)}"
-    print(f'Retrieving information for {song_name} from Deezer API...')
-    cleaned_name = removechars.title(song_name)
-
+def getData(artist, features, title):
+    featured_artists = features.split(", ")
+    print(
+        f'Retrieving information for {removechars.title(title)} - {artist} {features} from Deezer API...')
     base_url = "https://api.deezer.com/search"
-    params = {"q": cleaned_name}
+    params = {"q": removechars.title(title)}
 
     try:
         response = requests.get(base_url, params=params)
@@ -69,8 +68,8 @@ def getData(artist, title):
 
             # Filter tracks by artist
             filtered_artist = [
-                track for track in filtered_titles if compare.strings(track["artist"]["name"], artist)]
-
+                track for track in filtered_titles if compare.strings(track["artist"]["name"], artist) or any(compare.strings(track["artist"]["name"], featured_artist) for featured_artist in featured_artists)
+            ]
             try:
                 # Pick the most popular track
                 track_info = max(

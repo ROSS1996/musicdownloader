@@ -60,7 +60,7 @@ def downloadSong(link, history_file, downloads_dir):
         music_id = linkchecker.songId(link)
         info = youtubemd.pytubeFetcher(link)
         metadata = deezermd.getData(
-            artist=info['main_artist'], title=info['title'])
+            artist=info['main_artist'], features=info['featured_artists'], title=info['title'])
         if metadata:
             info.update(metadata)
         info['filename'] = removechars.windows(info['filename'])
