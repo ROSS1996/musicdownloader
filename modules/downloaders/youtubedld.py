@@ -1,11 +1,12 @@
 import youtube_dl
 import os
+from config import configs
 
 
 def download(link, title, filename, music_id):
     ydl_opts = {
         'format': 'bestaudio/best',
-        'outtmpl': f'downloads/{filename}.%(ext)s',
+        'outtmpl': f'{configs.downloads_dir}/{filename}.%(ext)s',
         'postprocessors': [{
             'key': 'FFmpegExtractAudio',
             'preferredcodec': 'mp3',
@@ -14,10 +15,6 @@ def download(link, title, filename, music_id):
     }
 
     try:
-        # Check if the 'downloads' directory exists and create it if needed
-        output_directory = 'downloads'
-        os.makedirs(output_directory, exist_ok=True)
-
         with youtube_dl.YoutubeDL(ydl_opts) as ydl:
             print(f'[Youtube-DL] Downloading {title} ({link})')
             ydl.download([link])

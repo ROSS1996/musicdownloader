@@ -41,10 +41,6 @@ def all(text):
 
 
 def windows(text):
-    # Remove "#" symbol
-    cleaned_text = text.replace("#", "")
-
-    # Remove unauthorized Windows filename characters
-    cleaned_text = re.sub(r'[<>:"/\\|?*]', "", cleaned_text)
-
-    return cleaned_text
+    pattern = r'[^A-Za-z0-9\-_. ]'
+    cleaned_string = re.sub(pattern, '', text)
+    return cleaned_string

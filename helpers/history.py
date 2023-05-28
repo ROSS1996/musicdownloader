@@ -2,11 +2,33 @@ import json
 import os
 import datetime
 from helpers import linkchecker
+from config import configs
 
 
-def check(link, historyFile, downloadDir):
+def clean_inexistent():
+    # Create the file if it is not created, create a new empty list
     try:
-        with open(historyFile, 'r') as f:
+        with open(configs.history_file, 'r') as f:
+            data = json.load(f)
+    except FileNotFoundError:
+        data = []
+
+    # If there are items in the file, check if they exist in the directory.
+    if data:
+        data = [entry for entry in data if os.path.exists(
+            os.path.join(configs.downloads_dir, f"{entry['filename']}.mp3"))]
+
+    # Save the modified or new (empty) file
+    with open(configs.history_file, 'w') as f:
+        json.dump(data, f, indent=2)
+        f.write('\n')
+
+    return False
+
+
+def check(link):
+    try:
+        with open(configs.history_file, 'r') as f:
             downloaded_data = json.load(f)
     except:
         return False
@@ -16,7 +38,7 @@ def check(link, historyFile, downloadDir):
         link_id = linkchecker.songId(link)
         if entry_id == link_id:
             filename = entry['filename']
-            mp3_path = os.path.join(downloadDir, f"{filename}.mp3")
+            mp3_path = os.path.join(configs.downloadDir, f"{filename}.mp3")
             if os.path.exists(mp3_path):
                 return True
             else:
@@ -24,9 +46,9 @@ def check(link, historyFile, downloadDir):
     return False
 
 
-def save(filename, link, historyFile):
+def save(filename, link):
     try:
-        with open(historyFile, 'r') as f:
+        with open(configs.history_file, 'r') as f:
             data = json.load(f)
     except FileNotFoundError:
         data = []
@@ -38,6 +60,6 @@ def save(filename, link, historyFile):
                        'link': link, 'datetime': formatted_datetime}
     data.append(downloaded_info)
 
-    with open(historyFile, 'w') as f:
+    with open(configs.history_file, 'w') as f:
         json.dump(data, f, indent=2)
         f.write('\n')

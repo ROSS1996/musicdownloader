@@ -2,6 +2,7 @@ from pytube import YouTube
 from pydub import AudioSegment
 import os
 from pytube.exceptions import RegexMatchError, ExtractError, VideoUnavailable
+from config import configs
 
 
 def download(link, title, filename):
@@ -29,7 +30,7 @@ def download(link, title, filename):
             f"[Pytube] Error finding audio stream for {title} ({link}): {str(e)}") from None
 
     # Download the audio stream and save it as a webm file
-    output_directory = 'downloads'
+    output_directory = configs.downloads_dir
     os.makedirs(output_directory, exist_ok=True)
     print(f"Downloading {filename}...")
     audio_path = audio_stream.download(

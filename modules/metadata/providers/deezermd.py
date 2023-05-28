@@ -48,8 +48,10 @@ def extract_metadata(track_data, album_data):
 
 
 def getData(artist, features, title):
+    all_artists = f"{artist} {features}"
+    full_song_name = f"{removechars.title(title)} - {all_artists}"
     print(
-        f'Retrieving information for {removechars.title(title)} - {artist} {features} from Deezer API...')
+        f'Retrieving information for {removechars.title(title)} - {all_artists} from Deezer API...')
     base_url = "https://api.deezer.com/search"
     params = {"q": removechars.title(title)}
 
@@ -62,31 +64,75 @@ def getData(artist, features, title):
 
             filtered_tracks = [
                 track for track in tracks
-                if compare.strings(removechars.title(track['title']), removechars.title(title))
-                and compare.strings(track["artist"]["name"], f"{artist}, {features}")
+                if compare.strings(removechars.title(track['title']), removechars.title(title)) and compare_track_artist(track_artist=track['artist']['name'], artist=full_song_name) or track["artist"]["id"] == 5080
             ]
+
+            sorted_tracks = sorted(
+                filtered_tracks, key=lambda track: track["rank"], reverse=True)
 
             track_metadata = None
             album_metadata = None
-            for track in filtered_tracks:
+
+            for track in sorted_tracks:
                 track_data = get_track_metadata(track["id"])
+                track_contributors = [contributor["name"]
+                                      for contributor in track_data["contributors"]]
+                track_from_artist = compare_track_artist(
+                    track_artist=track_data["artist"]["name"], track_contributors=track_contributors, artist=all_artists) or compare_track_artist(
+                    track_artist=track_data["artist"]["name"], track_contributors=track_contributors, artist=full_song_name)
+                track_from_various = True if track_data["artist"]["id"] == 5080 else False
+
+                if not track_from_artist or track_from_various:
+                    print(
+                        f"The artists from track {track_data['title']} didn't match the specified artist and it was ignored")
+                    print(
+                        f"Track artists {track_contributors}. The artists you are looking for are {all_artists}")
+                    print(
+                        f"Track from artist? {track_from_artist}, album from various? {track_from_various}")
+                    continue
+
                 album_data = get_album_metadata(track["album"]["id"])
-                if "error" not in track_data and "error" not in album_data:
-                    if track_metadata is None and album_metadata is None:
-                        track_metadata = track_data
-                        album_metadata = album_data
-                        continue
-                    album_type = albumType(album_data, track["artist"]["name"])
-                    if album_type == "Album":
-                        track_metadata = track_data
-                        album_metadata = album_data
-                        break
-                    elif album_type == "Single" and albumType(album_metadata, track["artist"]["name"]) != "Album":
-                        track_metadata = track_data
-                        album_metadata = album_data
-                    elif album_type == "Compilation" and albumType(album_metadata, track["artist"]["name"]) != "Album" and albumType(album_metadata, track["artist"]["name"]) != "Single":
-                        track_metadata = track_data
-                        album_metadata = album_data
+
+                if "error" in track_data or "error" in album_data:
+                    continue
+
+                album_contributors = [contributor["name"]
+                                      for contributor in album_data["contributors"]]
+                album_from_artist = compare_album_artist(
+                    album_artist=album_data["artist"]["name"], album_contributors=album_contributors, artist=all_artists) or compare_album_artist(
+                    album_artist=album_data["artist"]["name"], album_contributors=album_contributors, artist=full_song_name)
+                album_from_various = True if album_data["artist"]["id"] == 5080 else False
+
+                if not album_from_artist and not album_from_various:
+                    print(
+                        f"The artists from album {album_data['title']} didn't match the specified artist and it was ignored")
+                    print(
+                        f"Album artists: {album_contributors}. The artists you are looking for are {all_artists}")
+                    print(
+                        f"Album from artist? {album_from_artist}, album from various? {album_from_various}")
+                    continue
+
+                if track_metadata is None and album_metadata is None:
+                    track_metadata = track_data
+                    album_metadata = album_data
+                    continue
+
+                album_type_value = album_type(
+                    number_tracks=album_data["nb_tracks"], record_type=album_data["record_type"], from_artist=album_from_artist, from_various=album_from_various)
+                if album_type_value == "Album":
+                    track_metadata = track_data
+                    album_metadata = album_data
+                    break
+                elif album_type_value == "Single" and album_data["fans"] > album_metadata["fans"]:
+                    track_metadata = track_data
+                    album_metadata = album_data
+                elif album_type_value == "Compilation" and album_data["fans"] > album_metadata["fans"]:
+                    track_metadata = track_data
+                    album_metadata = album_data
+            if track_metadata is None and album_metadata is None:
+                print(
+                    f"No song metadata found for '{title} - {all_artists}' in Deezer API, using YT Information...")
+                return None
             song_metadata = extract_metadata(track_metadata, album_metadata)
             return song_metadata
 
@@ -100,13 +146,45 @@ def getData(artist, features, title):
     return None
 
 
-def albumType(album_data, artist):
-    if album_data["nb_tracks"] > 1 and any(compare.strings(contributor["name"], artist) for contributor in album_data["contributors"]):
+def album_type(number_tracks, record_type, from_artist, from_various):
+    if number_tracks > 1 and from_artist:
         return "Album"
-    elif album_data["nb_tracks"] == 1 and any(compare.strings(contributor["name"], artist) for contributor in album_data["contributors"]):
+    elif number_tracks == 1 or record_type.lower() == "single" and from_artist or from_various:
         return "Single"
     else:
         return "Compilation"
+
+
+def compare_track_artist(artist=None, track_artist=None, track_contributors=None):
+    if not isinstance(track_artist, (str, type(None))):
+        return False
+
+    if not isinstance(track_contributors, (list, type(None))):
+        return False
+
+    if track_artist is not None and track_contributors is None:
+        return compare.strings(track_artist, artist)
+
+    if track_contributors is not None and track_artist is None:
+        return any(compare.strings(contributor, artist) for contributor in track_contributors)
+
+    return compare.strings(track_artist, artist) or any(compare.strings(contributor, artist) for contributor in track_contributors)
+
+
+def compare_album_artist(artist=None, album_artist=None, album_contributors=None):
+    if not isinstance(album_artist, (str, type(None))):
+        return False
+
+    if not isinstance(album_contributors, (list, type(None))):
+        return False
+
+    if album_artist is not None and album_contributors is None:
+        return compare.strings(album_artist, artist)
+
+    if album_contributors is not None and album_artist is None:
+        return any(compare.strings(contributor, artist) for contributor in album_contributors)
+
+    return compare.strings(album_artist, artist) or any(compare.strings(contributor, artist) for contributor in album_contributors)
 
 
 def get_track_metadata(track_id):

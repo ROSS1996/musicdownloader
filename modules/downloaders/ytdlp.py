@@ -1,11 +1,12 @@
 import yt_dlp
 import os
+from config import configs
 
 
-def download(link, title, filename, directory, music_id):
+def download(link, title, filename, music_id):
     ydl_opts = {
         'format': 'bestaudio/best',
-        'outtmpl': f'{directory}/{filename}.%(ext)s',
+        'outtmpl': f'{configs.downloads_dir}/{filename}.%(ext)s',
         'postprocessors': [{
             'key': 'FFmpegExtractAudio',
             'preferredcodec': 'mp3',
