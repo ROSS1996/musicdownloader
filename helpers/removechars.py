@@ -1,4 +1,5 @@
 import re
+from config.configs import devmode
 
 
 def title(title):
@@ -27,6 +28,10 @@ def title(title):
     cleaned_title = re.sub(r'([{}])'.format(
         re.escape(r':*?"<>')), r'\\\1', cleaned_title)
 
+    if devmode:
+        print(
+            f"[string-cleaner] function (title) received {title} and outputted {cleaned_title}")
+
     return cleaned_title
 
 
@@ -37,10 +42,19 @@ def all(text):
     # Remove special characters using regex
     cleaned_text = re.sub(pattern, "", text)
 
+    if devmode:
+        print(
+            f"[string-cleaner] function (all) received {text} and outputted {cleaned_text}")
+
     return cleaned_text
 
 
 def windows(text):
-    pattern = r'[^A-Za-z0-9\-_. ]'
+    pattern = r'[^\w\s\-_.]'
     cleaned_string = re.sub(pattern, '', text)
+
+    if devmode:
+        print(
+            f"[string-cleaner] function (windows) received {text} and outputted {cleaned_string}")
+
     return cleaned_string

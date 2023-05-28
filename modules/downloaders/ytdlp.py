@@ -20,15 +20,15 @@ def download(link, title, filename, music_id):
         return True
 
     except yt_dlp.DownloadError as e:
-        error_message = f"[YT-DLP] failed to download audio from {link}: {str(e)}"
+        error_message = f"[yt-dlp] failed to download audio from {link}: {str(e)}"
         raise Exception(error_message) from None
 
     except yt_dlp.utils.DownloadError as e:
-        error_message = f"[YT-DLP] encountered an error during download from {link}: {str(e)}"
+        error_message = f"[yt-dlp] encountered an error during download from {link}: {str(e)}"
         raise Exception(error_message) from None
 
     except yt_dlp.utils.ExtractorError as e:
-        error_message = f"[YT-DLP] encountered an error while extracting audio from {link}: {str(e)}"
+        error_message = f"[yt-dlp] encountered an error while extracting audio from {link}: {str(e)}"
         raise Exception(error_message) from None
 
     except Exception as e:

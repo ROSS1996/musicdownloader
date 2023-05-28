@@ -1,11 +1,13 @@
 import os
 import requests
 import eyed3
+from config import configs
 
 
 def edit_tags(info):
     if not isinstance(info, dict):
-        raise TypeError("The 'info' argument must be a dictionary")
+        raise TypeError(
+            "[tag-editor] the 'info' argument must be a dictionary")
 
     filename = info['filename']
     title = info['title']
@@ -19,11 +21,25 @@ def edit_tags(info):
     disc = disc = info['disc'] if 'genre' in info else None
     album_artist = info['album_artist'] if 'album_artist' in info else None
     downloads_dir = info["downloadDir"]
+    link = info['url']
 
-    print(f"Setting tags for {filename}...")
-    song_path = os.path.join(downloads_dir, f"{info['filename']}.mp3")
+    print(
+        f"[tag-editor] adding tags to {filename} / Link: {link}")
 
-    audio_file = eyed3.load(song_path)
+    if configs.devmode:
+        print(
+            f"[tag-editor] Tags: {info}")
+    try:
+        song_path = os.path.join(downloads_dir, f"{filename}.mp3")
+        if configs.devmode:
+            print(f"[tag-editor] {song_path}")
+        audio_file = eyed3.load(song_path)
+        if configs.devmode:
+            print(
+                f"[tag-editor] {song_path} was successfully opened")
+    except:
+        error_message = f"[tag-editor] the tag editor could not open {song_path}"
+        raise Exception(error_message) from None
 
     if audio_file is None:
         audio_file = eyed3.core.AudioFile(song_path)
@@ -41,6 +57,7 @@ def edit_tags(info):
 
     if year is not None:
         audio_file.tag.recording_date = eyed3.core.Date(year)
+        audio_file.tag.release_date = eyed3.core.Date(year)
     if genre is not None:
         audio_file.tag.genre = genre
     if position is not None:
@@ -51,9 +68,18 @@ def edit_tags(info):
     try:
         thumbnail_data = requests.get(thumbnail_url).content
         audio_file.tag.images.set(3, thumbnail_data, 'image/jpeg', u"Cover")
+        if configs.devmode:
+            print(
+                f"[tag-editor] {song_path} was successfully opened")
     except requests.RequestException as e:
-        print(f"Error retrieving thumbnail: {str(e)}")
+        print(
+            f"[tag-editor] the editor could not download the cover for {song_path} and the song file will be saved without it.")
+        if configs.devmode:
+            print(
+                f"[tag-editor] thumbnail url: {thumbnail_url}")
+            print(f"[tag-editor] cause of the error: {str(e)}")
 
     audio_file.tag.save()
 
-    print(f"Tags set for {filename}!")
+    print(
+        f"[tag-editor] the metadata tags for {filename} were successfully saved.")

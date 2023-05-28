@@ -1,6 +1,7 @@
 import requests
 from datetime import datetime
 from helpers import removechars, compare
+from config import configs
 
 
 def extract_metadata(track_data, album_data):
@@ -51,16 +52,26 @@ def getData(artist, features, title):
     all_artists = f"{artist} {features}"
     full_song_name = f"{removechars.title(title)} - {all_artists}"
     print(
-        f'Retrieving information for {removechars.title(title)} - {all_artists} from Deezer API...')
+        f'[provider-deezer] retrieving information for {removechars.title(title)} - {all_artists}')
     base_url = "https://api.deezer.com/search"
     params = {"q": removechars.title(title)}
-
+    if configs.devmode:
+        print(
+            f'[provider-deezer] request URL: {base_url} / parameter: {params}')
     try:
         response = requests.get(base_url, params=params)
         response.raise_for_status()
         data = response.json()
         if "data" in data and data["data"]:
+            print(
+                f'[provider-deezer] sucesfully retrieved information from API. looking for possible matches.')
             tracks = data["data"]
+
+            if configs.devmode:
+                print(f'[provider-deezer] {len(tracks)} results:')
+                for track in tracks:
+                    print(
+                        f"[provider-deezer] Track ID: {track['id']} / Track Name: {track['title']} / Track Artist: {track['artist']['name']} / Track Album: {track['album']['title']} / Track Album ID {track['album']['id']}")
 
             filtered_tracks = [
                 track for track in tracks
@@ -70,8 +81,13 @@ def getData(artist, features, title):
             sorted_tracks = sorted(
                 filtered_tracks, key=lambda track: track["rank"], reverse=True)
 
+            if configs.devmode:
+                print(
+                    f'[provider-deezer] {len(sorted_tracks)} filtered results. looking for the best match in filtered tracks')
+
             track_metadata = None
             album_metadata = None
+            chosen_album_type = None
 
             for track in sorted_tracks:
                 track_data = get_track_metadata(track["id"])
@@ -82,18 +98,23 @@ def getData(artist, features, title):
                     track_artist=track_data["artist"]["name"], track_contributors=track_contributors, artist=full_song_name)
                 track_from_various = True if track_data["artist"]["id"] == 5080 else False
 
+                if configs.devmode:
+                    print(
+                        f"[provider-deezer] Track ID: {track_data['id']} / Track Name: {track_data['title']} / Track Artist: {track_data['artist']['name']} / Track Contributors: {track_contributors} / Track Album: {track_data['album']['title']} / Track Album ID {track_data['album']['id']} / Track From Artist: {track_from_artist} / Track From Various: {track_from_various}")
+
                 if not track_from_artist or track_from_various:
-                    print(
-                        f"The artists from track {track_data['title']} didn't match the specified artist and it was ignored")
-                    print(
-                        f"Track artists {track_contributors}. The artists you are looking for are {all_artists}")
-                    print(
-                        f"Track from artist? {track_from_artist}, album from various? {track_from_various}")
+                    if configs.devmode:
+                        print(
+                            f"[provider-deezer] the artists from track {track_data['title']} didn't match the specified artist and it was ignored")
+                        print(
+                            f"[provider-deezer] The track artist is {track_data['artist']['name']} and the track artists {track_contributors}. The provider used {full_song_name} to compare it.")
                     continue
 
                 album_data = get_album_metadata(track["album"]["id"])
 
                 if "error" in track_data or "error" in album_data:
+                    print(
+                        f"[provider-deezer] there API returned an error while retrieving the album information. skipping track {track_data['title']} ({track_data['id']})")
                     continue
 
                 album_contributors = [contributor["name"]
@@ -103,45 +124,65 @@ def getData(artist, features, title):
                     album_artist=album_data["artist"]["name"], album_contributors=album_contributors, artist=full_song_name)
                 album_from_various = True if album_data["artist"]["id"] == 5080 else False
 
-                if not album_from_artist and not album_from_various:
+                if configs.devmode:
                     print(
-                        f"The artists from album {album_data['title']} didn't match the specified artist and it was ignored")
-                    print(
-                        f"Album artists: {album_contributors}. The artists you are looking for are {all_artists}")
-                    print(
-                        f"Album from artist? {album_from_artist}, album from various? {album_from_various}")
-                    continue
+                        f"[provider-deezer] Album ID: {album_data['id']} / Album Name: {album_data['title']} / Album Artist: {album_data['artist']['name']} / Album Contributors: {track_contributors} / Album Track num: {album_data['nb_tracks']} / Album Record Type: {album_data['record_type']}  / Album From Artist: {album_from_artist} / Album From Various: {album_from_various}")
 
-                if track_metadata is None and album_metadata is None:
-                    track_metadata = track_data
-                    album_metadata = album_data
+                if not album_from_artist and not album_from_various:
+                    if configs.devmode:
+                        print(
+                            f"[provider-deezer] the artists from track {album_data['title']} didn't match the specified artist and it was ignored")
+                        print(
+                            f"[provider-deezer] The album artist is {album_data['artist']['name']} and the album artists {album_contributors}. The provider used {full_song_name} to compare it.")
                     continue
 
                 album_type_value = album_type(
                     number_tracks=album_data["nb_tracks"], record_type=album_data["record_type"], from_artist=album_from_artist, from_various=album_from_various)
-                if album_type_value == "Album":
+
+                if configs.devmode:
+                    print(
+                        f"[provider-deezer] {album_data['title']} (ID: {album_data['id']}) is classified as {album_type_value}")
+
+                if track_metadata is None and album_metadata is None:
                     track_metadata = track_data
                     album_metadata = album_data
-                    break
-                elif album_type_value == "Single" and album_data["fans"] > album_metadata["fans"]:
+                    chosen_album_type = album_type_value
+                    continue
+
+                if chosen_album_type != "Album" or album_type_value == "Album" and album_data["fans"] > album_metadata["fans"]:
+                    if configs.devmode:
+                        print(
+                            f"[provider-deezer] {album_data['title']} ({album_data['fans']} fans) is chosen over {album_metadata['title']} ({album_metadata['fans']})")
                     track_metadata = track_data
                     album_metadata = album_data
-                elif album_type_value == "Compilation" and album_data["fans"] > album_metadata["fans"]:
+                elif chosen_album_type == "Compilation" or album_type_value == "Single" and album_data["fans"] > album_metadata["fans"] and chosen_album_type != "Album":
+                    if configs.devmode:
+                        print(
+                            f"[provider-deezer] {album_data['title']} ({album_data['fans']} fans) is chosen over {album_metadata['title']} ({album_metadata['fans']})")
+                    track_metadata = track_data
+                    album_metadata = album_data
+                elif album_type_value == "Compilation" and chosen_album_type == "Compilation" and album_data["fans"] > album_metadata["fans"]:
+                    if configs.devmode:
+                        print(
+                            f"[provider-deezer] {album_data['title']} ({album_data['fans']} fans) is chosen over {album_metadata['title']} ({album_metadata['fans']})")
                     track_metadata = track_data
                     album_metadata = album_data
             if track_metadata is None and album_metadata is None:
                 print(
-                    f"No song metadata found for '{title} - {all_artists}' in Deezer API, using YT Information...")
+                    f"[provider-deezer] no metadata match found for '{title} - {all_artists}', using YT Information.")
                 return None
             song_metadata = extract_metadata(track_metadata, album_metadata)
             return song_metadata
 
     except requests.exceptions.RequestException as e:
-        print(f"An error occurred during the API request: {str(e)}")
+        print(
+            f"[provider-deezer] an error occurred during the API request: {str(e)}")
     except (KeyError, IndexError) as e:
-        print(f"No song metadata found for '{artist} - {title}'. {str(e)}")
+        print(
+            f"[provider-deezer] no song metadata found for '{artist} - {title}'. {str(e)}")
     except ValueError as e:
-        print(f"An error occurred while processing the response: {str(e)}")
+        print(
+            f"[provider-deezer] an error occurred while processing the response: {str(e)}")
 
     return None
 
@@ -188,6 +229,9 @@ def compare_album_artist(artist=None, album_artist=None, album_contributors=None
 
 
 def get_track_metadata(track_id):
+    if configs.devmode:
+        print(
+            f"[provider-deezer] connecting'https://api.deezer.com/album/{track_id}')")
     track_response = requests.get(f'https://api.deezer.com/track/{track_id}')
     track_data = track_response.json()
     track_response.raise_for_status()
@@ -195,6 +239,9 @@ def get_track_metadata(track_id):
 
 
 def get_album_metadata(album_id):
+    if configs.devmode:
+        print(
+            f"[provider-deezer] connecting'https://api.deezer.com/album/{album_id}')")
     album_response = requests.get(f'https://api.deezer.com/album/{album_id}')
     album_data = album_response.json()
     album_response.raise_for_status()

@@ -24,7 +24,7 @@ def readLinks():
             lines = f.readlines()
             if not lines:
                 raise Exception(
-                    "The links file is empty. Consider adding some YouTube links to it before executing the script")
+                    "[script] The links file is empty. Consider adding some YouTube links to it before executing the script")
             split_lines = []
             for line in lines:
                 split_items = line.strip().split()
@@ -33,7 +33,7 @@ def readLinks():
             return split_lines
 
     except FileNotFoundError:
-        print(f"The links file does not exist in the current directory. A new file was created. Consider adding some YouTube links to it before executing the script")
+        print(f"[script] the links file does not exist in the current directory. A new file was created. Consider adding some YouTube links to it before executing the script")
         sys.exit(1)
 
 
@@ -42,7 +42,8 @@ def processLinks(links):
     for link in links:
         link = link.strip()
         if not linkchecker.validLink(link):
-            print(f'{link} is not a valid Youtube/YT Music link. Skipping...')
+            print(
+                f'[script] {link} is not a valid Youtube/YT Music link. Skipping...')
             continue
         if linkchecker.isPlaylist(link):
             playlist_video_urls = playlist.decouple(link)
@@ -55,7 +56,7 @@ def processLinks(links):
 def downloadSong(link):
     if library.check(link=link):
         print(
-            f'Song {link} already exists in the downloads directory. Skipping...')
+            f'[script] song {link} already exists in the downloads directory. Skipping...')
         return
 
     try:
@@ -71,7 +72,7 @@ def downloadSong(link):
             configs.downloads_dir, f"{info['filename']}.mp3")
         if os.path.exists(file_path):
             print(
-                f"Song '{info['filename']}' already exists in the downloads directory. Skipping...")
+                f"[script] song '{info['filename']}' already exists in the downloads directory. Skipping...")
             library.save(
                 filename=info['filename'], link=link)
             return
@@ -84,7 +85,7 @@ def downloadSong(link):
         library.save(filename=info['filename'], link=link)
 
     except Exception as e:
-        print(f"An error occurred while processing link: {link}")
+        print(f"[script] an error occurred while processing link: {link}")
         print(f"Error details: {str(e)}")
         traceback.print_exc()
         return
@@ -94,7 +95,7 @@ createFiles()
 links = readLinks()
 library.clean_inexistent()
 all_links = processLinks(links)
-print(f'{len(all_links)} links loaded.')
+print(f'[script] {len(all_links)} links loaded.')
 # Loop through each link and download the song and metadata
 for link in all_links:
     downloadSong(link=link)

@@ -15,15 +15,17 @@ def clean_inexistent():
 
     # If there are items in the file, check if they exist in the directory.
     if data:
-        data = [entry for entry in data if os.path.exists(
-            os.path.join(configs.downloads_dir, f"{entry['filename']}.mp3"))]
+        for entry in data:
+            if not os.path.exists(os.path.join(configs.downloads_dir, f"{entry['filename']}.mp3")):
+                if configs.verbose or configs.devmode:
+                    print(
+                        f"[library] the file {entry['filename']}.mp3 ({entry['link']}) does not exist in {configs.downloads_dir} and it was removed from the library")
+                data.remove(entry)
 
     # Save the modified or new (empty) file
     with open(configs.library_file, 'w') as f:
         json.dump(data, f, indent=2)
         f.write('\n')
-
-    return False
 
 
 def check(link):
@@ -40,6 +42,8 @@ def check(link):
             filename = entry['filename']
             mp3_path = os.path.join(configs.downloadDir, f"{filename}.mp3")
             if os.path.exists(mp3_path):
+                print(
+                    f"[library] the file {entry['filename']}.mp3 ({entry['link']}) does not exist in {configs.downloads_dir} and it was removed from the library")
                 return True
             else:
                 return False
@@ -63,3 +67,5 @@ def save(filename, link):
     with open(configs.library_file, 'w') as f:
         json.dump(data, f, indent=2)
         f.write('\n')
+
+    print(f"[library] {filename} ({link}) was saved in the library")
