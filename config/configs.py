@@ -33,13 +33,13 @@ config_downloads_dir = clean_path(config.get(
     'Locations', 'downloads_dir', fallback=music_folder))
 config_links_dir = clean_path(config.get(
     'Locations', 'links_dir', fallback=root_dir))
-config_history_dir = clean_path(config.get(
-    'Locations', 'history_dir', fallback=root_dir))
+config_library_dir = clean_path(config.get(
+    'Locations', 'library_dir', fallback=root_dir))
 
 downloads_dir = next((Path(p) for p in (config_downloads_dir, music_folder)
                      if p and Path(p).exists()), root_dir / "downloads")
-history_file = Path(config_history_dir, "history.json") if config_history_dir and Path(
-    config_history_dir).exists() else root_dir / "history.json"
+library_file = Path(config_library_dir, "library.json") if config_library_dir and Path(
+    config_library_dir).exists() else root_dir / "library.json"
 links_file = Path(config_links_dir, "links.txt") if config_links_dir and Path(
     config_links_dir).exists() else root_dir / "links.txt"
 

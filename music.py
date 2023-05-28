@@ -7,13 +7,13 @@ from pathlib import Path
 from modules.downloaders import ytdlp
 from modules.metadata import youtubemd, editor
 from modules.metadata.providers import deezermd
-from helpers import linkchecker, removechars, playlist, history
+from helpers import linkchecker, removechars, playlist, library
 from config import configs
 
 
 def createFiles():
     os.makedirs(configs.downloads_dir, exist_ok=True)
-    if not os.path.exists(configs.history_file):
+    if not os.path.exists(configs.library_file):
         with open(file_path, 'w') as f:
             json.dump([], f)
 
@@ -53,7 +53,7 @@ def processLinks(links):
 
 
 def downloadSong(link):
-    if history.check(link=link):
+    if library.check(link=link):
         print(
             f'Song {link} already exists in the downloads directory. Skipping...')
         return
@@ -72,7 +72,7 @@ def downloadSong(link):
         if os.path.exists(file_path):
             print(
                 f"Song '{info['filename']}' already exists in the downloads directory. Skipping...")
-            history.save(
+            library.save(
                 filename=info['filename'], link=link)
             return
 
@@ -81,7 +81,7 @@ def downloadSong(link):
 
         info['downloadDir'] = configs.downloads_dir
         editor.edit_tags(info)
-        history.save(filename=info['filename'], link=link)
+        library.save(filename=info['filename'], link=link)
 
     except Exception as e:
         print(f"An error occurred while processing link: {link}")
@@ -92,7 +92,7 @@ def downloadSong(link):
 
 createFiles()
 links = readLinks()
-history.clean_inexistent()
+library.clean_inexistent()
 all_links = processLinks(links)
 print(f'{len(all_links)} links loaded.')
 # Loop through each link and download the song and metadata

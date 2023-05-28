@@ -8,7 +8,7 @@ from config import configs
 def clean_inexistent():
     # Create the file if it is not created, create a new empty list
     try:
-        with open(configs.history_file, 'r') as f:
+        with open(configs.library_file, 'r') as f:
             data = json.load(f)
     except FileNotFoundError:
         data = []
@@ -19,7 +19,7 @@ def clean_inexistent():
             os.path.join(configs.downloads_dir, f"{entry['filename']}.mp3"))]
 
     # Save the modified or new (empty) file
-    with open(configs.history_file, 'w') as f:
+    with open(configs.library_file, 'w') as f:
         json.dump(data, f, indent=2)
         f.write('\n')
 
@@ -28,7 +28,7 @@ def clean_inexistent():
 
 def check(link):
     try:
-        with open(configs.history_file, 'r') as f:
+        with open(configs.library_file, 'r') as f:
             downloaded_data = json.load(f)
     except:
         return False
@@ -48,7 +48,7 @@ def check(link):
 
 def save(filename, link):
     try:
-        with open(configs.history_file, 'r') as f:
+        with open(configs.library_file, 'r') as f:
             data = json.load(f)
     except FileNotFoundError:
         data = []
@@ -60,6 +60,6 @@ def save(filename, link):
                        'link': link, 'datetime': formatted_datetime}
     data.append(downloaded_info)
 
-    with open(configs.history_file, 'w') as f:
+    with open(configs.library_file, 'w') as f:
         json.dump(data, f, indent=2)
         f.write('\n')
