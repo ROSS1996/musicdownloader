@@ -175,6 +175,9 @@ def getData(artist, features, title):
                     f"[provider-deezer] no metadata match found for '{title} - {all_artists}', using YT Information.")
                 return None
             song_metadata = extract_metadata(track_metadata, album_metadata)
+            if configs.devmode or configs.verbose:
+                logger.info(
+                    f"[provider-deezer] metadata successfully retrieved for '{title} - {all_artists}'")
             return song_metadata
 
     except requests.exceptions.RequestException as e:

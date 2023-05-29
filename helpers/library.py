@@ -44,7 +44,7 @@ def check(link):
         link_id = linkchecker.songId(link)
         if entry_id == link_id:
             filename = entry['filename']
-            mp3_path = os.path.join(configs.downloadDir, f"{filename}.mp3")
+            mp3_path = os.path.join(configs.downloads_dir, f"{filename}.mp3")
             if os.path.exists(mp3_path):
                 return True
             else:

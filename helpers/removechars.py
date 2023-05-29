@@ -54,7 +54,7 @@ def all(text):
 
 
 def windows(text):
-    pattern = r'[^\w\s\-_.]'
+    pattern = r'[^\w\s\-_.\(\)\[\],]'
     cleaned_string = re.sub(pattern, '', text)
 
     if devmode:
