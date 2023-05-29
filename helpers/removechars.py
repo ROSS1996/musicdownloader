@@ -1,5 +1,9 @@
 import re
-from config.configs import devmode
+from config.configs import devmode, get_logger
+import logging
+
+
+logger = get_logger()
 
 
 def title(title):
@@ -29,7 +33,7 @@ def title(title):
         re.escape(r':*?"<>')), r'\\\1', cleaned_title)
 
     if devmode:
-        print(
+        logger.info(
             f"[string-cleaner] function (title) received {title} and outputted {cleaned_title}")
 
     return cleaned_title
@@ -43,7 +47,7 @@ def all(text):
     cleaned_text = re.sub(pattern, "", text)
 
     if devmode:
-        print(
+        logger.info(
             f"[string-cleaner] function (all) received {text} and outputted {cleaned_text}")
 
     return cleaned_text
@@ -54,7 +58,7 @@ def windows(text):
     cleaned_string = re.sub(pattern, '', text)
 
     if devmode:
-        print(
+        logger.info(
             f"[string-cleaner] function (windows) received {text} and outputted {cleaned_string}")
 
     return cleaned_string

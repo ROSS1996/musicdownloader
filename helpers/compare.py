@@ -1,5 +1,8 @@
 from fuzzywuzzy import fuzz
-from config.configs import devmode
+from config.configs import devmode, get_logger
+import logging
+
+logger = get_logger()
 
 
 def strings(str1, str2, threshold=90):
@@ -13,11 +16,11 @@ def strings(str1, str2, threshold=90):
     # Check if the similarity ratio is above the threshold
     if similarity_ratio >= threshold:
         if devmode:
-            print(
+            logger.info(
                 f"[string-compare] {str1} is similar to {str2} / similarity ratio {similarity_ratio}")
         return True  # Strings are considered similar
     else:
         if devmode:
-            print(
+            logger.info(
                 f"[string-compare] {str1} is not similar to {str2} / similarity ratio {similarity_ratio}")
         return False  # Strings are not considered similar

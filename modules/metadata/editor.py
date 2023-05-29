@@ -2,6 +2,9 @@ import os
 import requests
 import eyed3
 from config import configs
+from config.configs import get_logger
+
+logger = get_logger()
 
 
 def edit_tags(info):
@@ -23,19 +26,19 @@ def edit_tags(info):
     downloads_dir = info["downloadDir"]
     link = info['url']
 
-    print(
+    logger.info(
         f"[tag-editor] adding tags to {filename} / Link: {link}")
 
     if configs.devmode:
-        print(
+        logger.info(
             f"[tag-editor] Tags: {info}")
     try:
         song_path = os.path.join(downloads_dir, f"{filename}.mp3")
         if configs.devmode:
-            print(f"[tag-editor] {song_path}")
+            logger.info(f"[tag-editor] {song_path}")
         audio_file = eyed3.load(song_path)
         if configs.devmode:
-            print(
+            logger.info(
                 f"[tag-editor] {song_path} was successfully opened")
     except:
         error_message = f"[tag-editor] the tag editor could not open {song_path}"
@@ -69,17 +72,17 @@ def edit_tags(info):
         thumbnail_data = requests.get(thumbnail_url).content
         audio_file.tag.images.set(3, thumbnail_data, 'image/jpeg', u"Cover")
         if configs.devmode:
-            print(
+            logger.info(
                 f"[tag-editor] {song_path} was successfully opened")
     except requests.RequestException as e:
-        print(
+        logger.error(
             f"[tag-editor] the editor could not download the cover for {song_path} and the song file will be saved without it.")
         if configs.devmode:
-            print(
+            logger.error(
                 f"[tag-editor] thumbnail url: {thumbnail_url}")
-            print(f"[tag-editor] cause of the error: {str(e)}")
+            logger.errror(f"[tag-editor] cause of the error: {str(e)}")
 
     audio_file.tag.save()
 
-    print(
+    logger.info(
         f"[tag-editor] the metadata tags for {filename} were successfully saved.")

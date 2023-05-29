@@ -3,6 +3,10 @@ import os
 import datetime
 from helpers import linkchecker
 from config import configs
+import logging
+from config.configs import get_logger
+
+logger = get_logger()
 
 
 def clean_inexistent():
@@ -17,8 +21,8 @@ def clean_inexistent():
     if data:
         for entry in data:
             if not os.path.exists(os.path.join(configs.downloads_dir, f"{entry['filename']}.mp3")):
-                if configs.verbose or configs.devmode:
-                    print(
+                if configs.verbose:
+                    logger.info(
                         f"[library] the file {entry['filename']}.mp3 ({entry['link']}) does not exist in {configs.downloads_dir} and it was removed from the library")
                 data.remove(entry)
 
@@ -42,8 +46,6 @@ def check(link):
             filename = entry['filename']
             mp3_path = os.path.join(configs.downloadDir, f"{filename}.mp3")
             if os.path.exists(mp3_path):
-                print(
-                    f"[library] the file {entry['filename']}.mp3 ({entry['link']}) does not exist in {configs.downloads_dir} and it was removed from the library")
                 return True
             else:
                 return False
@@ -68,4 +70,4 @@ def save(filename, link):
         json.dump(data, f, indent=2)
         f.write('\n')
 
-    print(f"[library] {filename} ({link}) was saved in the library")
+    logger.info(f"[library] {filename} ({link}) was saved in the library")

@@ -3,6 +3,8 @@ import os
 import re
 import platform
 from pathlib import Path
+import logging
+from logging import FileHandler
 
 
 def clean_path(string):
@@ -47,3 +49,37 @@ links_file = Path(config_links_dir, "links.txt") if config_links_dir and Path(
 # Get the values of devmode and verbose variables as booleans
 devmode = config.getboolean('Logging', 'devmode', fallback=False)
 verbose = config.getboolean('Logging', 'verbose', fallback=False)
+
+
+def get_logger():
+    # Create the logger
+    logger = logging.getLogger("root")
+    logger.setLevel(logging.DEBUG)
+
+    # Create a formatter for the console
+    console_formatter = logging.Formatter('%(message)s')
+
+    # Create a formatter for the file
+    file_formatter = logging.Formatter(
+        '%(asctime)s - %(levelname)s - %(message)s')
+
+    # Clear existing handlers to avoid duplicates
+    logger.handlers = []
+
+    # Create a console handler
+    console_handler = logging.StreamHandler()
+    console_handler.setFormatter(console_formatter)
+    console_handler.setLevel(logging.INFO)  # Set console level to INFO
+
+    # Add the console handler to the logger
+    logger.addHandler(console_handler)
+
+    if devmode:
+        # Create a file handler only if devmode is True
+        file_handler = FileHandler(Path('logs.log'))
+        file_handler.setFormatter(file_formatter)
+
+        # Add the file handler to the logger
+        logger.addHandler(file_handler)
+
+    return logger

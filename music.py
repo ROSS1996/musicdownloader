@@ -9,6 +9,9 @@ from modules.metadata import youtubemd, editor
 from modules.metadata.providers import deezermd
 from helpers import linkchecker, removechars, playlist, library
 from config import configs
+from config.configs import get_logger
+
+logger = get_logger()
 
 
 def createFiles():
@@ -33,7 +36,8 @@ def readLinks():
             return split_lines
 
     except FileNotFoundError:
-        print(f"[script] the links file does not exist in the current directory. A new file was created. Consider adding some YouTube links to it before executing the script")
+        logger.critical(
+            f"[script] the links file does not exist in the current directory. A new file was created. Consider adding some YouTube links to it before executing the script")
         sys.exit(1)
 
 
@@ -42,7 +46,7 @@ def processLinks(links):
     for link in links:
         link = link.strip()
         if not linkchecker.validLink(link):
-            print(
+            logger.info(
                 f'[script] {link} is not a valid Youtube/YT Music link. Skipping...')
             continue
         if linkchecker.isPlaylist(link):
@@ -55,7 +59,7 @@ def processLinks(links):
 
 def downloadSong(link):
     if library.check(link=link):
-        print(
+        logger.info(
             f'[script] song {link} already exists in the downloads directory. Skipping...')
         return
 
@@ -71,7 +75,7 @@ def downloadSong(link):
         file_path = os.path.join(
             configs.downloads_dir, f"{info['filename']}.mp3")
         if os.path.exists(file_path):
-            print(
+            logger.info(
                 f"[script] song '{info['filename']}' already exists in the downloads directory. Skipping...")
             library.save(
                 filename=info['filename'], link=link)
@@ -85,8 +89,9 @@ def downloadSong(link):
         library.save(filename=info['filename'], link=link)
 
     except Exception as e:
-        print(f"[script] an error occurred while processing link: {link}")
-        print(f"Error details: {str(e)}")
+        logger.error(
+            f"[script] an error occurred while processing link: {link}")
+        logger.error(f"Error details: {str(e)}")
         traceback.print_exc()
         return
 
@@ -95,7 +100,7 @@ createFiles()
 links = readLinks()
 library.clean_inexistent()
 all_links = processLinks(links)
-print(f'[script] {len(all_links)} links loaded.')
+logger.info(f'[script] {len(all_links)} links loaded.')
 # Loop through each link and download the song and metadata
 for link in all_links:
     downloadSong(link=link)
